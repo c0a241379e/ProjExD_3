@@ -150,16 +150,38 @@ def main():
     clock = pg.time.Clock()
     tmr = 0
     while True:
+        # イベント処理(入力の受付)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)           
+                beam = Beam(bird)
+        # 画面の描画           
         screen.blit(bg_img, [0, 0])
+
+        # 爆弾とビームの衝突判定
+        if bomb is not None and beam is not None:
+            if beam.rct.colliderect(bomb.rct):
+                bomb = None
+                beam = None
+
+        # こうかとんと爆弾の衝突判定
+        if bomb is not None:
+            if bird.rct.colliderect(bomb.rct):
+                bird.change_img(8, screen)
+                pg.display.update()
+                time.sleep(1)
+                return
+        #キャラクターの更新(移動/描画)
+        key_lst = pg.key.get_pressed()
+        bird.update(key_lst, screen)
 
         if beam is not None:
             beam.update(screen)
+
+        if bomb is not None:
+            bomb.update(screen)
         
         if bird.rct.colliderect(bomb.rct):
             # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
