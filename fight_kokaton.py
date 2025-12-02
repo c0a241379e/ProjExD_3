@@ -176,8 +176,10 @@ def main():
 
     # 複数の爆弾を生成
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-
+    # スコア表示用のインスタンスを生成
     score = Score()
+    # ビームのリスト
+    beams = []  
 
     while True:
         # イベント処理(入力の受付)
@@ -185,23 +187,30 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)
+                # スペースキーが押されたらビームを生成
+                beams.append(Beam(bird))
         # 画面の描画           
         screen.blit(bg_img, [0, 0])
 
-         # 各爆弾とビームの衝突判定
+         # 各ビームと各爆弾の衝突判定
         for i, bomb in enumerate(bombs):
-            if bomb is not None and beam is not None:
-                if beam.rct.colliderect(bomb.rct):
-                    bombs[i] = None
-                    beam = None
-                    bird.change_img(6, screen)
-                    pg.display.update()
-                    time.sleep(0.5)
-                    score.score += 100  # スコアを加算
+            for j, beam in enumerate(beams):
+                if bomb is not None and beam is not None:
+                    if beam.rct.colliderect(bomb.rct):
+                        bombs[i] = None
+                        beams[j] = None
+                        score.score += 100
+                        bird.change_img(6, screen)
+                        pg.display.update()
+                        time.sleep(0.5)
+
+        # Noneでないビームだけに更新
+        beams = [beam for beam in beams if beam is not None]
+
+        # 画面外に出たビームを削除
+        beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)]
         
-                    # Noneでない爆弾だけに更新
+        # Noneでない爆弾だけに更新
         bombs = [bomb for bomb in bombs if bomb is not None]
 
         # 各爆弾とこうかとんの衝突判定
@@ -222,9 +231,10 @@ def main():
         #キャラクターの更新(移動/描画)
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        # ビームの更新
-        if beam is not None:
+        # 各ビームの更新
+        for beam in beams:
             beam.update(screen)
+
 
         # スコアの更新
         score.update(screen)
