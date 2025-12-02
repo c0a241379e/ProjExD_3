@@ -36,9 +36,12 @@ class Bird:
         pg.K_LEFT: (-5, 0),
         pg.K_RIGHT: (+5, 0),
     }
+    # 8方向のこうかとん画像の辞書
     img0 = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
-    img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん（右向き）
-    imgs = {  # 0度から反時計回りに定義
+    # デフォルトのこうかとん（右向き）
+    img = pg.transform.flip(img0, True, False)  
+    # 0度から反時計回りに定義
+    imgs = {  
         (+5, 0): img,  # 右
         (+5, -5): pg.transform.rotozoom(img, 45, 0.9),  # 右上
         (0, -5): pg.transform.rotozoom(img, 90, 0.9),  # 上
@@ -66,6 +69,7 @@ class Bird:
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
+        # こうかとん画像の切り替え
         self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.img, self.rct)
 
@@ -75,26 +79,33 @@ class Bird:
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        # 移動量の合計を計算
         sum_mv = [0, 0]
+        # 押下キーに応じて移動量を加算
         for k, mv in __class__.delta.items():
+            # 押下されている場合
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
         self.rct.move_ip(sum_mv)
+        # 画面外に出たら元に戻す
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        # 向きの更新
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
             self.dire = tuple(sum_mv)  # 向きを更新
         
         # チャージ中は赤くする
         display_img = self.img.copy()
+        # チャージ量に応じて赤みを増加
         if self.charge > 0:
-            red_intensity = min(255, int(self.charge * 2.55))  # 0-100を0-255に変換
+            # 0-100を0-255に変換
+            red_intensity = min(255, int(self.charge * 2.55))  
             red_overlay = pg.Surface(display_img.get_size())
             red_overlay.fill((red_intensity, 0, 0))
             display_img.blit(red_overlay, (0, 0), special_flags=pg.BLEND_ADD)
-        
+        # 画面に転送
         screen.blit(display_img, self.rct)
 
 
@@ -232,6 +243,7 @@ class Particle:
             # 色を徐々に暗くする
             fade_color = tuple(int(c * (self.life / self.max_life)) for c in self.color)
             
+            # 描画
             pg.draw.circle(screen, fade_color, (int(self.x), int(self.y)), current_size)
 
 
@@ -270,7 +282,7 @@ class BigExplosion:
             color = random.choice(colors)
             size = random.randint(5, 15)
             life = random.randint(40, 70)
-            
+            # パーティクルを追加
             self.particles.append(Particle(center[0], center[1], vx, vy, color, size, life))
         
         # 衝撃波用の円
@@ -282,16 +294,19 @@ class BigExplosion:
         爆発エフェクトを更新
         引数 screen：画面Surface
         """
+        # 爆発の寿命を減少
         self.life -= 1
         
         # 衝撃波の描画
         if self.shockwave_radius < self.shockwave_max:
+            # 衝撃波の半径を増加
             self.shockwave_radius += 15
             alpha = int(255 * (1 - self.shockwave_radius / self.shockwave_max))
             if alpha > 0:
                 # 複数の衝撃波の輪を描画
                 for i in range(3):
                     radius = self.shockwave_radius - i * 20
+                    # 輪の透明度を設定
                     if radius > 0:
                         thickness = max(1, 5 - i)
                         pg.draw.circle(screen, (255, 200 - i * 50, 0), self.center, int(radius), thickness)
@@ -315,6 +330,7 @@ class Explosion:
         # 通常の爆発（gifベース）
         img = pg.image.load("fig/explosion.gif")
         scale = 1.0 + (charge / 100) * 2.0
+        # 4方向の画像を用意_flipを活用
         self.imgs = [
             pg.transform.rotozoom(img, 0, scale),
             pg.transform.rotozoom(pg.transform.flip(img, True, False), 0, scale),
@@ -322,7 +338,7 @@ class Explosion:
             pg.transform.rotozoom(pg.transform.flip(img, True, True), 0, scale)
         ]
         self.life = 20
-        
+        # 最初の画像
         self.img = self.imgs[0]
         self.rct = self.img.get_rect()
         self.rct.center = bomb.rct.center if hasattr(bomb, 'rct') else bomb
@@ -478,7 +494,7 @@ def main():
                     
                     # 大爆発エフェクトを表示
                     big_explosion.update(screen)
-                    
+                    # アニメーションの更新
                     score.update(screen)
                     pg.display.update()
                     clock.tick(50)
@@ -493,11 +509,16 @@ def main():
         screen.blit(bg_img, [0, 0])
 
         # 爆弾とビームの衝突時
+        # チャージ量に応じた爆発エフェクトとスコア加算
         for i, bomb in enumerate(bombs):
+            # 各ビームと衝突判定
             for j, beam in enumerate(beams):
+                # Noneチェックを追加
                 if bomb is not None and beam is not None:
+                    # 衝突判定
                     if beam.rct.colliderect(bomb.rct):
-                        explosions.append(Explosion(bomb, beam.charge))  # 爆発生成
+                        # 爆発生成
+                        explosions.append(Explosion(bomb, beam.charge))  
                         bombs[i] = None
                         beams[j] = None
                         # チャージ量に応じてスコア加算
@@ -520,7 +541,6 @@ def main():
             if bird.rct.colliderect(bomb.rct):
                 # 以前の処理を全て削除し、関数呼び出しに置き換える
                 show_game_over(screen, bird.img, bird.rct)
-                
                 # ゲームオーバーになったらループを抜ける、またはゲームを終了する
                 return
             
@@ -545,12 +565,12 @@ def main():
         
         # チャージバーの更新
         charge_bar.update(screen, bird.charge)
-        
+        # 画面更新
         pg.display.update()
         tmr += 1
         clock.tick(50)
 
-
+# メインループ終了
 if __name__ == "__main__":
     pg.init()
     main()
