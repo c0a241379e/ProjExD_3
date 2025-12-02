@@ -162,7 +162,35 @@ class Score:
         self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.img, self.rct)
 
-
+class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
+    def __init__(self, bomb: Bomb):
+        """
+        爆発エフェクトの初期化
+        引数 bomb：爆発する爆弾
+        """
+        img = pg.image.load("fig/explosion.gif")
+        self.imgs = [
+            img,
+            pg.transform.flip(img, True, False),
+            pg.transform.flip(img, False, True),
+            pg.transform.flip(img, True, True)
+        ]
+        self.img = self.imgs[0]
+        self.rct = self.img.get_rect()
+        self.rct.center = bomb.rct.center
+        self.life = 20  # 表示時間
+    
+    def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトを表示
+        """
+        self.life -= 1
+        if self.life > 0:
+            self.img = self.imgs[self.life % 4]
+            screen.blit(self.img, self.rct)
 
 
 def main():
@@ -180,6 +208,8 @@ def main():
     score = Score()
     # ビームのリスト
     beams = []  
+    # 爆発エフェクトのリスト
+    explosions = []  
 
     while True:
         # イベント処理(入力の受付)
@@ -192,17 +222,18 @@ def main():
         # 画面の描画           
         screen.blit(bg_img, [0, 0])
 
-         # 各ビームと各爆弾の衝突判定
+        # 爆弾とビームの衝突時
         for i, bomb in enumerate(bombs):
             for j, beam in enumerate(beams):
                 if bomb is not None and beam is not None:
                     if beam.rct.colliderect(bomb.rct):
+                        explosions.append(Explosion(bomb))  # 爆発生成
                         bombs[i] = None
                         beams[j] = None
-                        score.score += 100
-                        bird.change_img(6, screen)
-                        pg.display.update()
-                        time.sleep(0.5)
+                        score.score += 100  # スコア加算
+
+        # lifeが0より大きい爆発だけ残す
+        explosions = [exp for exp in explosions if exp.life > 0]
 
         # Noneでないビームだけに更新
         beams = [beam for beam in beams if beam is not None]
@@ -231,9 +262,14 @@ def main():
         #キャラクターの更新(移動/描画)
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
+        
         # 各ビームの更新
         for beam in beams:
             beam.update(screen)
+
+        # 爆発エフェクトの更新
+        for exp in explosions:
+            exp.update(screen)
 
 
         # スコアの更新
