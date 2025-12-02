@@ -374,7 +374,7 @@ class ChargeBar:
         引数2 charge：現在のチャージ量
         """
         if charge > 0:
-            # 枠
+            # ゲージの枠
             pg.draw.rect(screen, (255, 255, 255), (self.x, self.y, self.width, self.height), 2)
             
             # ゲージの色（100以上で赤く点滅）
@@ -476,7 +476,7 @@ def main():
         if charging:
             bird.charge += 2  # 1フレームあたり2増加
             # マックス（150超過）で即座に爆発
-            if bird.charge > 150:
+            if bird.charge > 115:
                 charging = False
                 big_explosion = BigExplosion(bird.rct.center, bird.charge)
                 bird.charge = 0
