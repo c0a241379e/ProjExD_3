@@ -165,6 +165,9 @@ def main():
             if beam.rct.colliderect(bomb.rct):
                 bomb = None
                 beam = None
+                bird.change_img(6, screen)  # 喜びの画像
+                pg.display.update()
+                time.sleep(0.5)
 
         # こうかとんと爆弾の衝突判定
         if bomb is not None:
