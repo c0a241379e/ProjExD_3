@@ -377,6 +377,45 @@ class ChargeBar:
                 warning = font.render("DANGER!", True, (255, 0, 0))
                 screen.blit(warning, (self.x + self.width + 10, self.y))
 
+def show_game_over(screen: pg.Surface, kk_img: pg.Surface, kk_rct: pg.Rect) -> None:
+    """ゲームオーバー画面を表示する。
+    
+    引数:
+      screen (pg.Surface): 描画対象のスクリーン表面
+      kk_img (pg.Surface): こうかとん画像（現在は使用されない）
+      kk_rct (pg.Rect): こうかとんの矩形（現在は使用されない）
+    
+    戻り値:
+      なし（None）
+    
+    動作:
+      1. 背景を黒で塗りつぶす
+      2. こうかとん（fig/8.png）を 1.5 倍に縮放して中央下に配置
+      3. 赤い \"GameOver\" テキストを中央に配置
+      4. すべてを描画して画面更新
+      5. 2000 ms（2 秒）待機
+    """
+    # 背景を真っ暗にする
+    screen.fill((0, 0, 0))
+
+    # こうかトンの画像を切り替えて中央に配置
+    kk_img = pg.transform.rotozoom(pg.image.load("fig/8.png"), 0, 1.5)   
+    kk_rct = kk_img.get_rect()
+    kk_rct.center = (WIDTH // 2, HEIGHT // 2 + 100)
+
+    # GameOver テキスト
+    font = pg.font.Font(None, 100)
+    txt_surf = font.render("GameOver", True, (255, 0, 0))
+    txt_rct = txt_surf.get_rect()
+    txt_rct.center = (WIDTH // 2, HEIGHT // 2)
+
+    # 描画
+    screen.blit(kk_img, kk_rct)
+    screen.blit(txt_surf, txt_rct)
+    pg.display.update()
+    # 表示を見せるために短く待機
+    pg.time.wait(2000)
+
 
 def main():
     """
@@ -446,11 +485,7 @@ def main():
                     explosion_timer += 1
                 
                 # ゲームオーバー表示
-                bird.change_img(8, screen)
-                fonto = pg.font.Font(None, 80)
-                txt = fonto.render("Game Over", True, (255, 0, 0))
-                screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
-                pg.display.update()
+                show_game_over(screen, bird.img, bird.rct)
                 time.sleep(2)
                 return
         
@@ -483,12 +518,10 @@ def main():
         # 各爆弾とこうかとんの衝突判定
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
-                bird.change_img(8, screen)
-                fonto = pg.font.Font(None, 80)
-                txt = fonto.render("Game Over", True, (255, 0, 0))
-                screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
-                pg.display.update()
-                time.sleep(2)
+                # 以前の処理を全て削除し、関数呼び出しに置き換える
+                show_game_over(screen, bird.img, bird.rct)
+                
+                # ゲームオーバーになったらループを抜ける、またはゲームを終了する
                 return
             
         # 各爆弾の更新
