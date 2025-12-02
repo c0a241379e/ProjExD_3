@@ -7,6 +7,7 @@ import pygame as pg
 
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
+NUM_OF_BOMBS = 5  # 爆弾の数
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -145,10 +146,13 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
-    bomb = Bomb((255, 0, 0), 10)
     beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
+
+    # 複数の爆弾を生成
+    bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+
     while True:
         # イベント処理(入力の受付)
         for event in pg.event.get():
@@ -160,38 +164,36 @@ def main():
         # 画面の描画           
         screen.blit(bg_img, [0, 0])
 
-        # 爆弾とビームの衝突判定
-        if bomb is not None and beam is not None:
-            if beam.rct.colliderect(bomb.rct):
-                bomb = None
-                beam = None
-                bird.change_img(6, screen)  # 喜びの画像
-                pg.display.update()
-                time.sleep(0.5)
+         # 各爆弾とビームの衝突判定
+        for i, bomb in enumerate(bombs):
+            if bomb is not None and beam is not None:
+                if beam.rct.colliderect(bomb.rct):
+                    bombs[i] = None
+                    beam = None
+                    bird.change_img(6, screen)
+                    pg.display.update()
+                    time.sleep(0.5)
 
-        # こうかとんと爆弾の衝突判定
-        if bomb is not None:
+                    # Noneでない爆弾だけに更新
+        bombs = [bomb for bomb in bombs if bomb is not None]
+
+        # 各爆弾とこうかとんの衝突判定
+        for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 bird.change_img(8, screen)
                 pg.display.update()
                 time.sleep(1)
                 return
+            
+        # 各爆弾の更新
+        for bomb in bombs:
+            bomb.update(screen)
+        
         #キャラクターの更新(移動/描画)
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
-        if beam is not None:
-            beam.update(screen)
-
-        if bomb is not None:
-            bomb.update(screen)
         
-        if bird.rct.colliderect(bomb.rct):
-            # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
-            bird.change_img(8, screen)
-            pg.display.update()
-            time.sleep(1)
-            return
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
